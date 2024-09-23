@@ -27,7 +27,7 @@ public class C2P2 {
     public void defineMacro(String[] macroLines) {
         String[] firstLineTokens = macroLines[0].split(" ");
         String macroName = firstLineTokens[1];
-        
+
         // Extract parameter names and add them to the PNT
         String[] parameters = firstLineTokens[2].split(",");
         PNT.addAll(Arrays.asList(parameters));
@@ -43,7 +43,7 @@ public class C2P2 {
     }
 
     // Function to expand the macro
-    public void expandMacro(String callLine) {
+    public List<String> expandMacro(String callLine) {
         String[] tokens = callLine.split(" ");
         String macroName = tokens[0];
         String[] arguments = tokens[1].split(",");
@@ -59,11 +59,11 @@ public class C2P2 {
 
         if (macro == null) {
             System.out.println("Macro not found!");
-            return;
+            return Collections.emptyList();
         }
 
-        // Expanded Macro Code
-        System.out.println("Expanded Macro:");
+        // List to store expanded macro instructions
+        List<String> expandedCode = new ArrayList<>();
 
         // Expand the macro using MDT and replace parameters with arguments
         for (int i = macro.mdtIndex + 1; i < MDT.size(); i++) {
@@ -74,23 +74,41 @@ public class C2P2 {
             for (int j = 0; j < PNT.size(); j++) {
                 line = line.replace(PNT.get(j), arguments[j]);  // Replace actual parameter names
             }
-            System.out.println(line);
+            expandedCode.add(line);
+        }
+
+        return expandedCode;
+    }
+
+    // Function to process ALP and expand macros
+    public void processALP(String[] alpLines) {
+        System.out.println("Processed ALP with Macro Expansion:");
+        for (String line : alpLines) {
+            if (line.startsWith("SWAPPING")) {
+                // Expand the macro when found in ALP
+                List<String> expandedMacro = expandMacro(line);
+                for (String expandedLine : expandedMacro) {
+                    System.out.println(expandedLine);  // Print expanded macro
+                }
+            } else {
+                System.out.println(line);  // Print ALP lines as is
+            }
         }
     }
 
-    // Print Tables
+    // Print Tables (MDT, MNT, PNT)
     public void printTables() {
-        System.out.println("MDT:");
+        System.out.println("\nMDT (Macro Definition Table):");
         for (int i = 0; i < MDT.size(); i++) {
             System.out.println(i + ": " + MDT.get(i));
         }
 
-        System.out.println("\nMNT:");
+        System.out.println("\nMNT (Macro Name Table):");
         for (MNTEntry entry : MNT) {
             System.out.println(entry);
         }
 
-        System.out.println("\nPNT:");
+        System.out.println("\nPNT (Parameter Name Table):");
         for (int i = 0; i < PNT.size(); i++) {
             System.out.println("Parameter: " + PNT.get(i));
         }
@@ -112,16 +130,33 @@ public class C2P2 {
 
         // Defining the macro
         processor.defineMacro(macroDefinition);
+        System.out.println();
 
-        // Macro call (Example)
-        String macroCall = "SWAPPING 0,1";
-
-        // Printing tables
+        // Print the macro tables (MDT, MNT, PNT)
         processor.printTables();
+        System.out.println();
 
-        // Expanding the macro
-        processor.expandMacro(macroCall);
+        // ALP with macro invocation
+        String[] alpLines = {
+            "START",
+            "MOV CX,0",
+            "OUTER_LOOP: MOV SI,CX",
+            "INNER_LOOP:",
+            "MOV DI, SI",
+            "INC DI",
+            "SWAPPING SI,DI",  // Macro call to be expanded
+            "INC SI",
+            "CMP SI,3",
+            "JLE INNER_LOOP",
+            "INC CX",
+            "CMP CX,3",
+            "JLE OUTER_LOOP",
+            "students: DB 1,2,3,4;",
+            "grades: DS 5,1,6,2;",
+            "END"
+        };
 
-        
+        // Processing ALP and expanding the macro
+        processor.processALP(alpLines);
     }
 }
