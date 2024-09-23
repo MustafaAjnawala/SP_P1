@@ -36,8 +36,8 @@ public class C2P2 {
         MNT.add(new MNTEntry(macroName, mdtIndex));
 
         // Process macro definition line by line and store in MDT
-        for (String line : macroLines) {
-            MDT.add(line);
+        for (int i = 1; i < macroLines.length; i++) {
+            MDT.add(macroLines[i]); // Add all lines except the macro prototype
             mdtIndex++;
         }
     }
@@ -125,7 +125,8 @@ public class C2P2 {
             "JAE SKIP",
             "XCHG grades[&i1],grades[&i2]",
             "XCHG students[&i1],students[&i2]",
-            "SKIP: ENDM"
+            "SKIP:",
+            "ENDM"
         };
 
         // Defining the macro
