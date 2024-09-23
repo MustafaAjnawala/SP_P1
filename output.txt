@@ -1,0 +1,18 @@
+
+--- All PNTAB Tables (Positional Parameter Tables) ---
+
+--- MNT (Macro Name Table) ---
+SWAPPING, 2, null, null, 0, 0, null
+
+--- MDT (Macro Definition Table) ---
+MOV 
+MOV ,grades[(P,0)]
+CMP 
+CMP ,grades[(P,1)]
+JAE 
+XCHG grades[(P,0)]
+XCHG grades[(P,0)],grades[(P,1)]
+XCHG students[(P,0)]
+XCHG students[(P,0)],students[(P,1)]
+
+--- KPTAB (Keyword Parameter Table) ---

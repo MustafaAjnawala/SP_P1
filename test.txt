@@ -1,0 +1,9 @@
+MACRO 
+SWAPPING &i1,&i2
+    MOV AL,grades[i1] 
+    CMP AL,grades[i2]
+    JAE SKIP    
+    XCHG grades[i1],grades[i2]
+    XCHG students[i1],students[i2]
+SKIP:
+ENDM
