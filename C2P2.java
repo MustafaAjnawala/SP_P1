@@ -1,18 +1,23 @@
 package C2P2;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
 
 // Macro Name Table Entry
 class MNTEntry {
     String macroName;
     int mdtIndex;
+    int PP;
 
-    public MNTEntry(String macroName, int mdtIndex) {
+    public MNTEntry(String macroName,int PP, int mdtIndex) {
         this.macroName = macroName;
         this.mdtIndex = mdtIndex;
+        this.PP = PP;
     }
 
     public String toString() {
-        return "Macro Name: " + macroName + ", MDT Index: " + mdtIndex;
+        return "Name: " + macroName +", #PP:"+ PP+" #KP: 0"+", #EV: 0"+", MDTP: " + mdtIndex+", KPDTP: 0"+", SSTAB: 0";
     }
 }
 
@@ -27,22 +32,29 @@ public class C2P2 {
     public void defineMacro(String[] macroLines) {
         String[] firstLineTokens = macroLines[0].split(" ");
         String macroName = firstLineTokens[1];
-
+    
         // Extract parameter names and add them to the PNT
         String[] parameters = firstLineTokens[2].split(",");
         PNT.addAll(Arrays.asList(parameters));
-
+    
         // Add the macro name to MNT with the starting index of MDT
-        MNT.add(new MNTEntry(macroName, mdtIndex));
-
+        MNT.add(new MNTEntry(macroName,PNT.size(), mdtIndex));
+    
         // Process macro definition line by line and store in MDT
         for (int i = 1; i < macroLines.length; i++) {
-            MDT.add(macroLines[i]); // Add all lines except the macro prototype
+            String line = macroLines[i];
+            
+            // Replace parameter names with their indices from PNT
+            for (int j = 0; j < parameters.length; j++) {
+                line = line.replace(parameters[j], "P" + j); // Using "P" + index format
+            }
+            
+            MDT.add(line); // Add modified line to MDT
             mdtIndex++;
         }
     }
+    
 
-    // Function to expand the macro
     public List<String> expandMacro(String callLine) {
         String[] tokens = callLine.split(" ");
         String macroName = tokens[0];
@@ -79,6 +91,7 @@ public class C2P2 {
 
         return expandedCode;
     }
+    
 
     // Function to process ALP and expand macros
     public void processALP(String[] alpLines) {
@@ -110,15 +123,17 @@ public class C2P2 {
 
         System.out.println("\nPNT (Parameter Name Table):");
         for (int i = 0; i < PNT.size(); i++) {
-            System.out.println("Parameter: " + PNT.get(i));
+            System.out.println(i+": " + PNT.get(i));
         }
     }
 
     public static void main(String[] args) {
         C2P2 processor = new C2P2();
 
+        
+       
         // Macro definition (Example)
-        String[] macroDefinition = {
+      /*  String[] macroDefinition = {
             "MACRO SWAPPING &i1,&i2",
             "MOV AL,grades[&i1]",
             "CMP AL,grades[&i2]",
@@ -127,7 +142,19 @@ public class C2P2 {
             "XCHG students[&i1],students[&i2]",
             "SKIP:",
             "ENDM"
-        };
+        }; */
+        List<String> macroLinesList = new ArrayList<>();
+        
+        try (BufferedReader br = new BufferedReader(new FileReader("C2P2\\macro.txt"))) {
+            String line;
+            while ((line = br.readLine()) != null && !line.isEmpty()) {
+                macroLinesList.add(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+         // Convert List<String> to String[]
+         String[] macroDefinition = macroLinesList.toArray(new String[0]);
 
         // Defining the macro
         processor.defineMacro(macroDefinition);
@@ -138,24 +165,42 @@ public class C2P2 {
         System.out.println();
 
         // ALP with macro invocation
-        String[] alpLines = {
-            "START",
-            "MOV CX,0",
-            "OUTER_LOOP: MOV SI,CX",
-            "INNER_LOOP:",
-            "MOV DI, SI",
-            "INC DI",
-            "SWAPPING SI,DI",  // Macro call to be expanded
-            "INC SI",
-            "CMP SI,3",
-            "JLE INNER_LOOP",
-            "INC CX",
-            "CMP CX,3",
-            "JLE OUTER_LOOP",
-            "students: DB 1,2,3,4;",
-            "grades: DS 5,1,6,2;",
-            "END"
-        };
+        // String[] alpLines = {
+        //     "START",
+        //     "MOV CX,0",
+        //     "OUTER_LOOP: MOV SI,CX",
+        //     "INNER_LOOP:",
+        //     "MOV DI, SI",
+        //     "INC DI",
+        //     "SWAPPING SI,DI",  // Macro call to be expanded
+        //     "INC SI",
+        //     "CMP SI,3",
+        //     "JLE INNER_LOOP",
+        //     "INC CX",
+        //     "CMP CX,3",
+        //     "JLE OUTER_LOOP",
+        //     "students: DB 1,2,3,4;",
+        //     "grades: DS 5,1,6,2;",
+        //     "END"
+        // };
+        List<String> alpLinesList = new ArrayList<>();
+        boolean startReading = false;
+        try (BufferedReader br = new BufferedReader(new FileReader("C2P2\\macro.txt"))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                if (line.equals("START")) {
+                    startReading = true;  // Start reading ALP lines from "START"
+                }
+                if (startReading) {
+                    alpLinesList.add(line);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        
+        // Convert List<String> to String[]
+        String[] alpLines = alpLinesList.toArray(new String[0]);
 
         // Processing ALP and expanding the macro
         processor.processALP(alpLines);
