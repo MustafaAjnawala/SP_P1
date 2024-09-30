@@ -1,18 +1,34 @@
 
---- All PNTAB Tables (Positional Parameter Tables) ---
+MDT (Macro Definition Table):
+0: MOV AL,grades[P0]
+1: CMP AL,grades[P1]
+2: JAE SKIP
+3: XCHG grades[P0],grades[P1]
+4: XCHG students[P0],students[P1]
+5: SKIP:
+6: ENDM
 
---- MNT (Macro Name Table) ---
-SWAPPING, 2, null, null, 0, 0, null
+MNT (Macro Name Table):
+Name: SWAPPING, #PP:2 #KP: 0, #EV: 0, MDTP: 0, KPDTP: 0, SSTAB: 0
 
---- MDT (Macro Definition Table) ---
-MOV 
-MOV ,grades[(P,0)]
-CMP 
-CMP ,grades[(P,1)]
-JAE 
-XCHG grades[(P,0)]
-XCHG grades[(P,0)],grades[(P,1)]
-XCHG students[(P,0)]
-XCHG students[(P,0)],students[(P,1)]
+PNT (Parameter Name Table):
+0: &i1
+1: &i2
 
---- KPTAB (Keyword Parameter Table) ---
+Processed ALP after Macro Expansion:
+START
+MOV CX,0
+OUTER_LOOP: MOV SI,CX
+INNER_LOOP:
+MOV DI, SI
+INC DI
+SWAPPG SI,DI
+INC SI
+CMP SI,3
+JLE INNER_LOOP
+INC CX
+CMP CX,3
+JLE OUTER_LOOP
+students: DB 1,2,3,4;
+grades: DS 5,1,6,2;
+END
