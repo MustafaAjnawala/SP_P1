@@ -1,4 +1,5 @@
 package C2P2;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -28,7 +29,12 @@ class MNTEntry {
 public class C2P2 {
     List<String> MDT = new ArrayList<>(); // Macro Definition Table
     List<MNTEntry> MNT = new ArrayList<>(); // Macro Name Table
-    List<String> PNT = new ArrayList<>(); // Parameter Name Table (actual names)
+    List<String> PNT = new ArrayList<>(); // Parameter Name Table
+    List<String> APTAB = new ArrayList<>();
+    List<String> SSNTAB = new ArrayList<>();
+    List<String> EVNTAB = new ArrayList<>();
+    List<String> KPTAB = new ArrayList<>();
+
     int mdtIndex = 0;
 
     // Function to define a macro
@@ -57,6 +63,7 @@ public class C2P2 {
         }
     }
 
+    // Funtion to expand the MACRO
     public List<String> expandMacro(String callLine) {
         String[] tokens = callLine.split(" ");
         String macroName = tokens[0];
@@ -82,12 +89,12 @@ public class C2P2 {
         // Expand the macro using MDT and replace parameters with arguments
         for (int i = macro.mdtIndex + 1; i < MDT.size(); i++) {
             String line = MDT.get(i);
-            if (line.equals("ENDM"))
+            if (line.equals("MEND"))
                 break;
 
             // Replace parameter names (PNT) with the corresponding arguments
-            for (int j = 0; j < PNT.size(); j++) {
-                line = line.replace(PNT.get(j), arguments[j]); // Replace actual parameter names
+            for (int j = 0; j < APTAB.size(); j++) {
+                line = line.replace("P" + j, APTAB.get(j)); // Replace P0, P1 with actual arguments from APTAB
             }
             expandedCode.add(line);
         }
@@ -97,55 +104,109 @@ public class C2P2 {
 
     // Function to process ALP and expand macros
     public void processALP(String[] alpLines) {
-        try(PrintWriter pw=new PrintWriter(new FileWriter("C2P2\\output.txt",true))) {
+        try (PrintWriter pw = new PrintWriter(new FileWriter("C2P2\\output.txt", true))) {
             System.out.println("Processed ALP after Macro Expansion:");
             pw.println("\nProcessed ALP after Macro Expansion:");
-        for (String line : alpLines) {
-            if (line.startsWith("SWAPPING")) {
-                // Expand the macro when found in ALP
-                List<String> expandedMacro = expandMacro(line);
-                for (String expandedLine : expandedMacro) {
-                    System.out.println(expandedLine); // Print expanded macro
-                    pw.println(expandedLine);
+            for (String line : alpLines) {
+                if (line.startsWith("SWAPPING")) {
+                    // Detect macro call and store actual parameters in APTAB
+                    // APTAB.clear(); // Clear previous values from APTAB
+                    String[] tokens = line.split(" ");
+                    String[] actualParameters = tokens[1].split(",");
+                    APTAB.addAll(Arrays.asList(actualParameters)); // Store actual parameters in APTAB
+
+                    // Expand the macro using APTAB
+                    List<String> expandedMacro = expandMacro(line);
+                    for (String expandedLine : expandedMacro) {
+                        System.out.println(expandedLine); // Print expanded macro
+                        pw.println(expandedLine);
+                    }
+                } else {
+                    System.out.println(line); // Print ALP lines as is
+                    pw.println(line);
                 }
-            } else {
-                System.out.println(line); // Print ALP lines as is
-                pw.println(line);
             }
-        }
+                pw.println("\nAPTAB");
+                for (int i = 0; i < APTAB.size(); i++) {
+                    // System.out.println(i + ": " + APTAB.get(i));
+                    pw.println(i + ": " + APTAB.get(i));
+                }
+            
         } catch (Exception e) {
-            // TODO: handle exception
+            System.out.println(e);
         }
-        
+
     }
 
     // Print Tables (MDT, MNT, PNT)
     public void printTables() {
-        try(PrintWriter pw =new PrintWriter(new FileWriter("C2P2\\output.txt"))) {
+        try (PrintWriter pw = new PrintWriter(new FileWriter("C2P2\\output.txt"))) {
             System.out.println("\nMDT (Macro Definition Table):");
             pw.println("\nMDT (Macro Definition Table):");
-        for (int i = 0; i < MDT.size(); i++) {
-            System.out.println(i + ": " + MDT.get(i));
-            pw.println(i + ": " + MDT.get(i));
-        }
+            for (int i = 0; i < MDT.size(); i++) {
+                System.out.println(i + ": " + MDT.get(i));
+                pw.println(i + ": " + MDT.get(i));
+            }
 
-        System.out.println("\nMNT (Macro Name Table):");
-        pw.println("\nMNT (Macro Name Table):");
-        for (MNTEntry entry : MNT) {
-            System.out.println(entry);
-            pw.println(entry);
-        }
+            System.out.println("\nMNT (Macro Name Table):");
+            pw.println("\nMNT (Macro Name Table):");
+            for (MNTEntry entry : MNT) {
+                System.out.println(entry);
+                pw.println(entry);
+            }
 
-        System.out.println("\nPNT (Parameter Name Table):");
-        pw.println("\nPNT (Parameter Name Table):");
-        for (int i = 0; i < PNT.size(); i++) {
-            System.out.println(i + ": " + PNT.get(i));
-            pw.println(i + ": " + PNT.get(i));
-        }
+            System.out.println("\nPNT (Parameter Name Table):");
+            pw.println("\nPNT (Parameter Name Table):");
+            for (int i = 0; i < PNT.size(); i++) {
+                System.out.println(i + ": " + PNT.get(i));
+                pw.println(i + ": " + PNT.get(i));
+            }
+
+            pw.println("\nSSNTAB (Sequence Symbol Table):");
+            if (SSNTAB.isEmpty()) {
+                pw.println("---");
+            } else {
+                for (int i = 0; i < SSNTAB.size(); i++) {
+                    System.out.println(i + ": " + SSNTAB.get(i));
+                    pw.println(i + ": " + SSNTAB.get(i));
+                }
+            }
+
+            pw.println("\nEVNTAB (Expansion Time Variable Name Table):");
+            if (EVNTAB.isEmpty()) {
+                pw.println("---");
+            } else {
+                for (int i = 0; i < EVNTAB.size(); i++) {
+                    System.out.println(i + ": " + EVNTAB.get(i));
+                    pw.println(i + ": " + EVNTAB.get(i));
+                }
+            }
+
+            System.out.println("\nKPTAB (Keyword Parameter Table):");
+            pw.println("\nKPTAB (Keyword Parameter Table):");
+            if (KPTAB.isEmpty()) {
+                pw.println("---");
+            } else {
+                for (int i = 0; i < KPTAB.size(); i++) {
+                    System.out.println(i + ": " + KPTAB.get(i));
+                    pw.println(i + ": " + KPTAB.get(i));
+                }
+            }
+
+            pw.println("\nAPTAB (Actual Parameter Table):");
+            if (APTAB.isEmpty()) {
+                System.out.println("---");
+                pw.println("---");
+            } else {
+                for (int i = 0; i < APTAB.size(); i++) {
+                    System.out.println(i + ": " + APTAB.get(i));
+                    pw.println(i + ": " + APTAB.get(i));
+                }
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        
+
     }
 
     public static void main(String[] args) {

@@ -6,7 +6,7 @@ MDT (Macro Definition Table):
 3: XCHG grades[P0],grades[P1]
 4: XCHG students[P0],students[P1]
 5: SKIP:
-6: ENDM
+6: MEND
 
 MNT (Macro Name Table):
 Name: SWAPPING, #PP:2 #KP: 0, #EV: 0, MDTP: 0, KPDTP: 0, SSTAB: 0
@@ -15,6 +15,18 @@ PNT (Parameter Name Table):
 0: &i1
 1: &i2
 
+SSNTAB (Sequence Symbol Table):
+---
+
+EVNTAB (Expansion Time Variable Name Table):
+---
+
+KPTAB (Keyword Parameter Table):
+---
+
+APTAB (Actual Parameter Table):
+---
+
 Processed ALP after Macro Expansion:
 START
 MOV CX,0
@@ -22,7 +34,11 @@ OUTER_LOOP: MOV SI,CX
 INNER_LOOP:
 MOV DI, SI
 INC DI
-SWAPPG SI,DI
+CMP AL,grades[DI]
+JAE SKIP
+XCHG grades[SI],grades[DI]
+XCHG students[SI],students[DI]
+SKIP:
 INC SI
 CMP SI,3
 JLE INNER_LOOP
@@ -32,3 +48,7 @@ JLE OUTER_LOOP
 students: DB 1,2,3,4;
 grades: DS 5,1,6,2;
 END
+
+APTAB
+0: SI
+1: DI
